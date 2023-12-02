@@ -5,7 +5,7 @@ from pathlib import Path
 
 def python_mypy_ok(filepath: Path) -> bool:
     mypy_proc = subprocess.run(["mypy", filepath], check=False)
-    return True if mypy_proc.returncode == 0 else False
+    return mypy_proc.returncode == 0
 
 
 def copy_file_replace_line(

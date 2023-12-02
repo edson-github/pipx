@@ -86,7 +86,7 @@ def _get_venv_resource_paths(
     resource_type: str, venv: Venv, venv_resource_path: Path, local_resource_dir: Path
 ) -> Set[Path]:
     resource_paths = set()
-    assert resource_type in ("app", "man"), "invalid resource type"
+    assert resource_type in {"app", "man"}, "invalid resource type"
     get_package_resource_paths: Callable[[Venv, PackageInfo, Path, Path], Set[Path]]
     get_package_resource_paths = {
         "app": _get_package_bin_dir_app_paths,
@@ -113,20 +113,13 @@ def _get_venv_resource_paths(
         resource_paths = get_package_resource_paths(
             venv, main_package_info, venv_resource_path, local_resource_dir
         )
-    else:
-        # No metadata and no valid python interpreter.
-        # We'll take our best guess on what to uninstall here based on symlink
-        # location for symlink-capable systems.
-        # The heuristic here is any symlink in ~/.local/bin pointing to
-        # .local/share/pipx/venvs/VENV_NAME/{bin,Scripts} should be uninstalled.
-
-        # For non-symlink systems we give up and return an empty set.
-        if not local_resource_dir.is_dir() or not can_symlink(local_resource_dir):
-            return set()
-
+    elif local_resource_dir.is_dir() and can_symlink(local_resource_dir):
         resource_paths = get_exposed_paths_for_package(
             venv_resource_path, local_resource_dir
         )
+
+    else:
+        return set()
 
     return resource_paths
 
@@ -141,8 +134,7 @@ def uninstall(
     """
     if not venv_dir.exists():
         print(f"Nothing to uninstall for {venv_dir.name} {sleep}")
-        app = which(venv_dir.name)
-        if app:
+        if app := which(venv_dir.name):
             print(
                 f"{hazard}  Note: '{app}' still exists on your system and is on your PATH"
             )

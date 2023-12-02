@@ -119,16 +119,12 @@ def update_test_packages_cache(
 
             package_name = package_spec_re.group(1)
             package_ver = package_spec_re.group(2)
-            package_dist_patt = (
-                re.escape(package_name)
-                + r"-"
-                + re.escape(package_ver)
-                + r"(.tar.gz|.zip|-)"
-            )
-            matches = []
-            for output_dir_file in packages_dir_files:
-                if re.search(package_dist_patt, output_dir_file.name):
-                    matches.append(output_dir_file)
+            package_dist_patt = f"{re.escape(package_name)}-{re.escape(package_ver)}(.tar.gz|.zip|-)"
+            matches = [
+                output_dir_file
+                for output_dir_file in packages_dir_files
+                if re.search(package_dist_patt, output_dir_file.name)
+            ]
             if len(matches) == 1:
                 packages_dir_files.remove(matches[0])
                 packages_dir_hits.append(matches[0])
@@ -148,33 +144,32 @@ def update_test_packages_cache(
     print(f"LEFTOVER (unused) FILES: {len(packages_dir_files)}")
 
     if check_only:
-        return 0 if len(packages_dir_missing) == 0 else 1
-    else:
-        for package_spec in packages_dir_missing:
-            pip_download_process = subprocess.run(
-                [
-                    "pip",
-                    "download",
-                    "--no-deps",
-                    package_spec,
-                    "-d",
-                    str(packages_dir_path),
-                ],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if pip_download_process.returncode == 0:
-                print(f"Successfully downloaded {package_spec}")
-            else:
-                print(f"ERROR downloading {package_spec}", file=sys.stderr)
-                print(pip_download_process.stdout, file=sys.stderr)
-                print(pip_download_process.stderr, file=sys.stderr)
-                exit_code = 1
+        return 0 if not packages_dir_missing else 1
+    for package_spec in packages_dir_missing:
+        pip_download_process = subprocess.run(
+            [
+                "pip",
+                "download",
+                "--no-deps",
+                package_spec,
+                "-d",
+                str(packages_dir_path),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if pip_download_process.returncode == 0:
+            print(f"Successfully downloaded {package_spec}")
+        else:
+            print(f"ERROR downloading {package_spec}", file=sys.stderr)
+            print(pip_download_process.stdout, file=sys.stderr)
+            print(pip_download_process.stderr, file=sys.stderr)
+            exit_code = 1
 
-        for unused_file in packages_dir_files:
-            print(f"Deleting {unused_file}...")
-            unused_file.unlink()
+    for unused_file in packages_dir_files:
+        print(f"Deleting {unused_file}...")
+        unused_file.unlink()
 
     return exit_code
 

@@ -215,15 +215,7 @@ def format_report_table_row(package_data: PackageData) -> str:
     else:
         sys_install_time = ""
 
-    row_string = (
-        f"{package_data.package_spec:24}{package_data.overall_pf_str:12}"
-        f"{package_data.clear_pip_pf_str:8}{package_data.clear_pipx_pf_str:8}"
-        f"{clear_install_time:8}"
-        f"{package_data.sys_pip_pf_str:8}{package_data.sys_pipx_pf_str:8}"
-        f"{sys_install_time:8}"
-    )
-
-    return row_string
+    return f"{package_data.package_spec:24}{package_data.overall_pf_str:12}{package_data.clear_pip_pf_str:8}{package_data.clear_pipx_pf_str:8}{clear_install_time:8}{package_data.sys_pip_pf_str:8}{package_data.sys_pipx_pf_str:8}{sys_install_time:8}"
 
 
 def format_report_table_footer(module_globals: ModuleGlobalsData) -> str:
@@ -273,18 +265,16 @@ def verify_installed_resources(
     resource_name_long = {"app": "apps", "man": "manual pages"}[resource_type]
     package_resources = PKG[package_name][resource_name].copy()
     if deps:
-        package_resources += PKG[package_name]["%s_of_dependencies" % resource_name]
+        package_resources += PKG[package_name][f"{resource_name}_of_dependencies"]
     if len(package_resources) == 0:
         return True
 
-    reported_resources_re = re.search(
-        r"These "
-        + resource_name_long
+    if reported_resources_re := re.search(
+        f"These {resource_name_long}"
         + r" are now globally available\n((?:    - [^\n]+\n)*)",
         captured_outerr.out,
         re.DOTALL,
-    )
-    if reported_resources_re:
+    ):
         reported_resources = [
             x.strip()[2:] for x in reported_resources_re.group(1).strip().split("\n")
         ]
@@ -319,9 +309,9 @@ def verify_post_install(
     using_clear_path: bool,
     deps: bool = False,
 ) -> Tuple[bool, Optional[bool], Optional[Path]]:
-    pip_error_file = None
     caplog_problem = False
     install_success = f"installed package {package_name}" in captured_outerr.out
+    pip_error_file = None
     for record in caplog.records:
         if "⚠️" in record.message or "WARNING" in record.message:
             if using_clear_path or "was already on your PATH" not in record.message:
@@ -329,10 +319,9 @@ def verify_post_install(
             print("verify_install: WARNING IN CAPLOG:", file=test_error_fh)
             print(record.message, file=test_error_fh)
         if "Fatal error from pip prevented installation" in record.message:
-            pip_error_file_re = re.search(
+            if pip_error_file_re := re.search(
                 r"pip output in file:\s+(\S.+)$", record.message
-            )
-            if pip_error_file_re:
+            ):
                 pip_error_file = Path(pip_error_file_re.group(1))
 
     if install_success and PKG[package_name].get("apps", None) is not None:
@@ -351,9 +340,9 @@ def verify_post_install(
     else:
         man_success = True
 
-    pip_pass = not (
-        (pipx_exit_code != 0)
-        and f"Error installing {package_name}" in captured_outerr.err
+    pip_pass = (
+        pipx_exit_code == 0
+        or f"Error installing {package_name}" not in captured_outerr.err
     )
     pipx_pass: Optional[bool]
     if pip_pass:

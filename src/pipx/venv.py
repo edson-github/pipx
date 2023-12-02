@@ -87,8 +87,8 @@ class Venv:
     def __init__(
         self, path: Path, *, verbose: bool = False, python: str = DEFAULT_PYTHON
     ) -> None:
-        self.root = path
         self.python = python
+        self.root = path
         self.bin_path, self.python_path, self.man_path = get_venv_paths(self.root)
         self.pipx_metadata = PipxMetadata(venv_dir=path)
         self.verbose = verbose
@@ -107,32 +107,26 @@ class Venv:
 
             if not shared_libs.is_valid:
                 raise PipxError(
-                    pipx_wrap(
-                        f"""
+                    f'''{pipx_wrap(f"""
                         Error: pipx's shared venv {shared_libs.root} is invalid
                         and needs re-installation. To fix this, install or
                         reinstall a package. For example:
-                        """
-                    )
-                    + f"\n  pipx install {self.root.name} --force",
+                        """)}\n  pipx install {self.root.name} --force''',
                     wrap_message=False,
                 )
 
     @property
     def name(self) -> str:
-        if self.pipx_metadata.main_package.package is not None:
-            venv_name = (
-                f"{self.pipx_metadata.main_package.package}"
-                f"{self.pipx_metadata.main_package.suffix}"
-            )
-        else:
-            venv_name = self.root.name
-        return venv_name
+        return (
+            f"{self.pipx_metadata.main_package.package}{self.pipx_metadata.main_package.suffix}"
+            if self.pipx_metadata.main_package.package is not None
+            else self.root.name
+        )
 
     @property
     def uses_shared_libs(self) -> bool:
         if self._existing:
-            pth_files = self.root.glob("**/" + PIPX_SHARED_PTH)
+            pth_files = self.root.glob(f"**/{PIPX_SHARED_PTH}")
             return next(pth_files, None) is not None
         else:
             # always use shared libs when creating a new venv

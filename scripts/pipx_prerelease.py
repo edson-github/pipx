@@ -37,17 +37,11 @@ def fix_changelog(new_version: str) -> bool:
 
 
 def pre_release(new_version: str) -> int:
-    if fix_version_py(new_version) and fix_changelog(new_version):
-        return 0
-    else:
-        return 1
+    return 0 if fix_version_py(new_version) and fix_changelog(new_version) else 1
 
 
 def main(argv: List[str]) -> int:
-    if len(argv) > 1:
-        new_version = argv[1]
-    else:
-        new_version = input("Enter new version: ")
+    new_version = argv[1] if len(argv) > 1 else input("Enter new version: ")
     return pre_release(new_version)
 
 

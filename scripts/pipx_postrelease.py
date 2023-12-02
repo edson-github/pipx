@@ -51,23 +51,17 @@ def get_current_version() -> List[str]:
 
     version = None
     for line in version_fh:
-        version_re = re.search(r"^\s*__version_info__\s*=\s*\(([^)]+)\)", line)
-        if version_re:
+        if version_re := re.search(
+            r"^\s*__version_info__\s*=\s*\(([^)]+)\)", line
+        ):
             version = version_re.group(1)
 
-    if version is not None:
-        return version.split(", ")
-    else:
-        return []
+    return version.split(", ") if version is not None else []
 
 
 def post_release() -> int:
-    current_version_list = get_current_version()
-    if not current_version_list:
-        return 1
-
-    if fix_version_py(current_version_list) and fix_changelog():
-        return 0
+    if current_version_list := get_current_version():
+        return 0 if fix_version_py(current_version_list) and fix_changelog() else 1
     else:
         return 1
 

@@ -78,7 +78,7 @@ def ensure_path(location: Path, *, force: bool) -> Tuple[bool, bool]:
                 )
             )
         need_shell_restart = userpath.need_shell_restart(location_str)
-    elif not in_current_path and need_shell_restart:
+    elif not in_current_path:
         print(
             pipx_wrap(
                 f"""

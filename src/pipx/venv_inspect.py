@@ -42,10 +42,15 @@ def get_dist(
     package: str, distributions: Collection[metadata.Distribution]
 ) -> Optional[metadata.Distribution]:
     """Find matching distribution in the canonicalized sense."""
-    for dist in distributions:
-        if canonicalize_name(dist.metadata["name"]) == canonicalize_name(package):
-            return dist
-    return None
+    return next(
+        (
+            dist
+            for dist in distributions
+            if canonicalize_name(dist.metadata["name"])
+            == canonicalize_name(package)
+        ),
+        None,
+    )
 
 
 def get_package_dependencies(
@@ -78,9 +83,9 @@ def get_apps_from_entry_points(dist: metadata.Distribution, bin_path: Path):
             continue
         if (bin_path / ep.name).exists():
             app_names.add(ep.name)
-        if WINDOWS and (bin_path / (ep.name + ".exe")).exists():
+        if WINDOWS and (bin_path / f"{ep.name}.exe").exists():
             # WINDOWS adds .exe to entry_point name
-            app_names.add(ep.name + ".exe")
+            app_names.add(f"{ep.name}.exe")
     return app_names
 
 
@@ -206,10 +211,10 @@ def _windows_extra_app_paths(app_paths: List[Path]) -> List[Path]:
     #   execution work; do not add them to apps to ensure they are not listed
     app_paths_output = app_paths.copy()
     for app_path in app_paths:
-        win_app_path = app_path.parent / (app_path.stem + "-script.py")
+        win_app_path = app_path.parent / f"{app_path.stem}-script.py"
         if win_app_path.exists():
             app_paths_output.append(win_app_path)
-        win_app_path = app_path.parent / (app_path.stem + ".exe.manifest")
+        win_app_path = app_path.parent / f"{app_path.stem}.exe.manifest"
         if win_app_path.exists():
             app_paths_output.append(win_app_path)
     return app_paths_output
@@ -342,7 +347,7 @@ def inspect_venv(
             for dep_path in man_paths_of_dependencies[dep]
         ]
 
-    venv_metadata = VenvMetadata(
+    return VenvMetadata(
         apps=apps,
         app_paths=app_paths,
         apps_of_dependencies=apps_of_dependencies,
@@ -354,5 +359,3 @@ def inspect_venv(
         package_version=root_dist.version,
         python_version=venv_python_version,
     )
-
-    return venv_metadata

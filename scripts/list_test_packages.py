@@ -48,9 +48,7 @@ def process_command_line(argv: List[str]) -> argparse.Namespace:
         help="Maximum verbosity, especially for pip operations.",
     )
 
-    args = parser.parse_args(argv)
-
-    return args
+    return parser.parse_args(argv)
 
 
 def parse_package_list(package_list_file: Path) -> List[Dict[str, Any]]:
