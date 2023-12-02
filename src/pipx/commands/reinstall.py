@@ -126,7 +126,7 @@ def reinstall_all(
         else:
             if package_exit != 0:
                 failed.append(venv_dir.name)
-    if len(failed) > 0:
+    if failed:
         raise PipxError(
             f"The following package(s) failed to reinstall: {', '.join(failed)}"
         )

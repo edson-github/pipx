@@ -32,8 +32,7 @@ class ParsedPackage(NamedTuple):
 
 def _split_path_extras(package_spec: str) -> Tuple[str, str]:
     """Returns (path, extras_string)"""
-    package_spec_extras_re = re.search(r"(.+)(\[.+\])", package_spec)
-    if package_spec_extras_re:
+    if package_spec_extras_re := re.search(r"(.+)(\[.+\])", package_spec):
         return (package_spec_extras_re.group(1), package_spec_extras_re.group(2))
     else:
         return (package_spec, "")
@@ -180,10 +179,9 @@ def parse_specifier_for_metadata(package_spec: str) -> str:
     * Convert local paths to absolute paths
     """
     parsed_package = _parse_specifier(package_spec)
-    package_or_url = _parsed_package_to_package_or_url(
+    return _parsed_package_to_package_or_url(
         parsed_package, remove_version_specifiers=False
     )
-    return package_or_url
 
 
 def parse_specifier_for_upgrade(package_spec: str) -> str:
@@ -195,10 +193,9 @@ def parse_specifier_for_upgrade(package_spec: str) -> str:
     * Convert local paths to absolute paths
     """
     parsed_package = _parse_specifier(package_spec)
-    package_or_url = _parsed_package_to_package_or_url(
+    return _parsed_package_to_package_or_url(
         parsed_package, remove_version_specifiers=True
     )
-    return package_or_url
 
 
 def get_extras(package_spec: str) -> Set[str]:
@@ -207,7 +204,7 @@ def get_extras(package_spec: str) -> Set[str]:
         return parsed_package.valid_pep508.extras
     elif parsed_package.valid_local_path:
         (_, package_extras_str) = _split_path_extras(parsed_package.valid_local_path)
-        return Requirement("notapackage" + package_extras_str).extras
+        return Requirement(f"notapackage{package_extras_str}").extras
 
     return set()
 

@@ -154,17 +154,14 @@ def _symlink_package_resource(
                 )
             )
         return
-    if is_symlink and not exists:
+    if is_symlink:
         logger.info(
             f"Removing existing symlink {str(symlink_path)} since it "
             "pointed non-existent location"
         )
         symlink_path.unlink()
 
-    if executable:
-        existing_executable_on_path = which(name_suffixed)
-    else:
-        existing_executable_on_path = None
+    existing_executable_on_path = which(name_suffixed) if executable else None
     symlink_path.symlink_to(path)
 
     if executable and existing_executable_on_path:
@@ -350,33 +347,30 @@ def _get_list_output(
     injected_packages: Optional[Dict[str, PackageInfo]] = None,
     suffix: str = "",
 ) -> str:
-    output = []
     suffix = f" ({bold(shlex.quote(package_name + suffix))})" if suffix else ""
-    output.append(
-        f"  {'installed' if new_install else ''} package {bold(shlex.quote(package_name))}"
-        f" {bold(package_version)}{suffix}, installed using {python_version}"
-    )
-
+    output = [
+        f"  {'installed' if new_install else ''} package {bold(shlex.quote(package_name))} {bold(package_version)}{suffix}, installed using {python_version}"
+    ]
     if new_install and (exposed_binary_names or unavailable_binary_names):
         output.append("  These apps are now globally available")
-    for name in exposed_binary_names:
-        output.append(f"    - {name}")
-    for name in unavailable_binary_names:
-        output.append(
-            f"    - {red(name)} (symlink missing or pointing to unexpected location)"
-        )
+    output.extend(f"    - {name}" for name in exposed_binary_names)
+    output.extend(
+        f"    - {red(name)} (symlink missing or pointing to unexpected location)"
+        for name in unavailable_binary_names
+    )
     if new_install and (exposed_man_pages or unavailable_man_pages):
         output.append("  These manual pages are now globally available")
-    for name in exposed_man_pages:
-        output.append(f"    - {name}")
-    for name in unavailable_man_pages:
-        output.append(
-            f"    - {red(name)} (symlink missing or pointing to unexpected location)"
-        )
+    output.extend(f"    - {name}" for name in exposed_man_pages)
+    output.extend(
+        f"    - {red(name)} (symlink missing or pointing to unexpected location)"
+        for name in unavailable_man_pages
+    )
     if injected_packages:
         output.append("    Injected Packages:")
-        for name in injected_packages:
-            output.append(f"      - {name} {injected_packages[name].package_version}")
+        output.extend(
+            f"      - {name} {injected_packages[name].package_version}"
+            for name in injected_packages
+        )
     return "\n".join(output)
 
 
@@ -424,7 +418,7 @@ def run_post_install_actions(
     display_name = f"{package_name}{package_metadata.suffix}"
 
     if (
-        not venv.main_package_name == package_name
+        venv.main_package_name != package_name
         and venv.package_metadata[venv.main_package_name].suffix
         == package_metadata.suffix
     ):
@@ -441,7 +435,7 @@ def run_post_install_actions(
                 should not be used. Consider using pip or a similar tool instead.
                 """
             )
-        if package_metadata.apps_of_dependencies and not include_dependencies:
+        if not include_dependencies:
             for (
                 dep,
                 dependent_apps,

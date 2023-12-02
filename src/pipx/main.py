@@ -42,10 +42,7 @@ def print_version() -> None:
 def prog_name() -> str:
     try:
         prog = os.path.basename(sys.argv[0])
-        if prog == "__main__.py":
-            return f"{sys.executable} -m pipx"
-        else:
-            return prog
+        return f"{sys.executable} -m pipx" if prog == "__main__.py" else prog
     except Exception:
         pass
     return "pipx"
@@ -184,7 +181,7 @@ def run_pipx_command(args: argparse.Namespace) -> ExitCode:  # noqa: C901
         if "spec" in args and args.spec is not None:
             if urllib.parse.urlparse(args.spec).scheme:
                 if "#egg=" not in args.spec:
-                    args.spec = args.spec + f"#egg={package}"
+                    args.spec = f"{args.spec}#egg={package}"
 
         venv_dir = venv_container.get_venv_dir(package)
         logger.info(f"Virtual Environment location is {venv_dir}")
@@ -193,8 +190,7 @@ def run_pipx_command(args: argparse.Namespace) -> ExitCode:  # noqa: C901
 
     if "python" in args:
         if args.python is not None and not Path(args.python).is_file():
-            py_launcher_python = find_py_launcher_python(args.python)
-            if py_launcher_python:
+            if py_launcher_python := find_py_launcher_python(args.python):
                 args.python = py_launcher_python
 
     if args.command == "run":
@@ -912,7 +908,7 @@ def cli() -> ExitCode:
             return ExitCode(1)
         return run_pipx_command(parsed_pipx_args)
     except PipxError as e:
-        print(str(e), file=sys.stderr)
+        print(e, file=sys.stderr)
         logger.debug(f"PipxError: {e}", exc_info=True)
         return ExitCode(1)
     except KeyboardInterrupt:

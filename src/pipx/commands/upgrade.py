@@ -75,9 +75,7 @@ def _upgrade_package(
             )
 
     if old_version == new_version:
-        if upgrading_all:
-            pass
-        else:
+        if not upgrading_all:
             print(
                 pipx_wrap(
                     f"""

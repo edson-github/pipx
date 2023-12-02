@@ -26,10 +26,7 @@ class c:
 
 def mkcolorfunc(style: str) -> Callable[[str], str]:
     def stylize_text(x: str) -> str:
-        if PRINT_COLOR:
-            return f"{style}{x}{c.end}"
-        else:
-            return x
+        return f"{style}{x}{c.end}" if PRINT_COLOR else x
 
     return stylize_text
 

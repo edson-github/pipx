@@ -97,12 +97,15 @@ def safe_unlink(file: Path) -> None:
 
 def get_pypackage_bin_path(binary_name: str) -> Path:
     return (
-        Path("__pypackages__")
-        / (str(sys.version_info.major) + "." + str(sys.version_info.minor))
-        / "lib"
+        (
+            (
+                Path("__pypackages__")
+                / f"{str(sys.version_info.major)}.{str(sys.version_info.minor)}"
+            )
+            / "lib"
+        )
         / "bin"
-        / binary_name
-    )
+    ) / binary_name
 
 
 def run_pypackage_bin(bin_path: Path, args: List[str]) -> NoReturn:
@@ -245,8 +248,6 @@ def analyze_pip_output(pip_stdout: str, pip_stderr: str) -> None:
             error: can't copy 'lib\ansible\module_utils\ansible_release.py': doesn't exist ...
             build\test1.c(4): error C2146: syntax error: missing ';' before identifier 'x'
     """
-    max_relevant_errors = 10
-
     failed_build_stdout: List[str] = []
     last_collecting_dep: Optional[str] = None
     # for any useful information in stdout, `pip install` must be run without
@@ -285,8 +286,7 @@ def analyze_pip_output(pip_stdout: str, pip_stderr: str) -> None:
     relevants_saved = []
     failed_build_stderr = set()
     for line in pip_stderr.split("\n"):
-        failed_build_match = failed_stderr_patt.search(line)
-        if failed_build_match:
+        if failed_build_match := failed_stderr_patt.search(line):
             failed_build_stderr.add(failed_build_match.group(1))
 
         for relevant_search in relevant_searches:
@@ -312,13 +312,13 @@ def analyze_pip_output(pip_stdout: str, pip_stderr: str) -> None:
         print("", file=sys.stderr)
         logger.error(f"pip seemed to fail to build package:\n    {last_collecting_dep}")
 
-    relevants_saved = dedup_ordered(relevants_saved)
-
-    if relevants_saved:
+    if relevants_saved := dedup_ordered(relevants_saved):
         print("\nSome possibly relevant errors from pip install:", file=sys.stderr)
 
         print_categories = [x.category for x in relevant_searches]
         relevants_saved_filtered = relevants_saved.copy()
+        max_relevant_errors = 10
+
         while (len(print_categories) > 1) and (
             len(relevants_saved_filtered) > max_relevant_errors
         ):
@@ -334,30 +334,32 @@ def analyze_pip_output(pip_stdout: str, pip_stderr: str) -> None:
 def subprocess_post_check_handle_pip_error(
     completed_process: "subprocess.CompletedProcess[str]",
 ) -> None:
-    if completed_process.returncode:
-        logger.info(f"{' '.join(completed_process.args)!r} failed")
-        # Save STDOUT and STDERR to file in pipx/logs/
-        if pipx.constants.pipx_log_file is None:
-            raise PipxError("Pipx internal error: No log_file present.")
-        pip_error_file = pipx.constants.pipx_log_file.parent / (
-            pipx.constants.pipx_log_file.stem + "_pip_errors.log"
-        )
-        with pip_error_file.open("w", encoding="utf-8") as pip_error_fh:
-            print("PIP STDOUT", file=pip_error_fh)
-            print("----------", file=pip_error_fh)
-            if completed_process.stdout is not None:
-                print(completed_process.stdout, file=pip_error_fh, end="")
-            print("\nPIP STDERR", file=pip_error_fh)
-            print("----------", file=pip_error_fh)
-            if completed_process.stderr is not None:
-                print(completed_process.stderr, file=pip_error_fh, end="")
+    if not completed_process.returncode:
+        return
+    logger.info(f"{' '.join(completed_process.args)!r} failed")
+    # Save STDOUT and STDERR to file in pipx/logs/
+    if pipx.constants.pipx_log_file is None:
+        raise PipxError("Pipx internal error: No log_file present.")
+    pip_error_file = (
+        pipx.constants.pipx_log_file.parent
+        / f"{pipx.constants.pipx_log_file.stem}_pip_errors.log"
+    )
+    with pip_error_file.open("w", encoding="utf-8") as pip_error_fh:
+        print("PIP STDOUT", file=pip_error_fh)
+        print("----------", file=pip_error_fh)
+        if completed_process.stdout is not None:
+            print(completed_process.stdout, file=pip_error_fh, end="")
+        print("\nPIP STDERR", file=pip_error_fh)
+        print("----------", file=pip_error_fh)
+        if completed_process.stderr is not None:
+            print(completed_process.stderr, file=pip_error_fh, end="")
 
-        logger.error(
-            "Fatal error from pip prevented installation. Full pip output in file:\n"
-            f"    {pip_error_file}"
-        )
+    logger.error(
+        "Fatal error from pip prevented installation. Full pip output in file:\n"
+        f"    {pip_error_file}"
+    )
 
-        analyze_pip_output(completed_process.stdout, completed_process.stderr)
+    analyze_pip_output(completed_process.stdout, completed_process.stderr)
 
 
 def exec_app(

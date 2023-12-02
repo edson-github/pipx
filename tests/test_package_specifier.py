@@ -190,76 +190,37 @@ def test_parse_specifier_for_upgrade(
             package_or_url = parse_specifier_for_upgrade(package_spec_in)
 
 
-@pytest.mark.parametrize(
-    "package_spec_in,pip_args_in,package_spec_expected,pip_args_expected,warning_str",
-    [
-        ('pipx==0.15.0;python_version>="3.6"', [], "pipx==0.15.0", [], None),
-        ("pipx==0.15.0", ["--editable"], "pipx==0.15.0", [], "Ignoring --editable"),
-        (
+@pytest.mark.parametrize("package_spec_in,pip_args_in,package_spec_expected,pip_args_expected,warning_str", [('pipx==0.15.0;python_version>="3.6"', [], "pipx==0.15.0", [], None), ("pipx==0.15.0", ["--editable"], "pipx==0.15.0", [], "Ignoring --editable"), (
             'pipx==0.15.0;python_version>="3.6"',
             [],
             "pipx==0.15.0",
             [],
             'Ignoring environment markers (python_version >= "3.6") in package',
-        ),
-        (
+        ), (
             "pipx==0.15.0",
             ["--no-cache-dir", "--editable"],
             "pipx==0.15.0",
             ["--no-cache-dir"],
             "Ignoring --editable",
-        ),
-        (
+        ), (
             "git+https://github.com/cs01/nox.git@5ea70723e9e6",
             ["--editable"],
             "git+https://github.com/cs01/nox.git@5ea70723e9e6",
             [],
             "Ignoring --editable",
-        ),
-        (
+        ), (
             "https://github.com/ambv/black/archive/18.9b0.zip",
             ["--editable"],
             "https://github.com/ambv/black/archive/18.9b0.zip",
             [],
             "Ignoring --editable",
-        ),
-        (
+        ), (
             "src/pipx",
             ["--editable"],
             str(Path("src/pipx").resolve()),
             ["--editable"],
             None,
-        ),
-        (
-            TEST_DATA_PATH + "/local_extras",
-            [],
-            str(Path(TEST_DATA_PATH + "/local_extras").resolve),
-            [],
-            None,
-        ),
-        (
-            TEST_DATA_PATH + "/local_extras[cow]",
-            [],
-            str(Path(TEST_DATA_PATH + "/local_extras").resolve) + "[cow]",
-            [],
-            None,
-        ),
-        (
-            TEST_DATA_PATH + "/local_extras",
-            ["--editable"],
-            str(Path(TEST_DATA_PATH + "/local_extras").resolve),
-            ["--editable"],
-            None,
-        ),
-        (
-            TEST_DATA_PATH + "/local_extras[cow]",
-            ["--editable"],
-            str(Path(TEST_DATA_PATH + "/local_extras").resolve) + "[cow]",
-            ["--editable"],
-            None,
-        ),
-    ],
-)
+        ), (f"{TEST_DATA_PATH}/local_extras", [], str(Path(f"{TEST_DATA_PATH}/local_extras").resolve), [], None), (f"{TEST_DATA_PATH}/local_extras[cow]", [], f'{str(Path(f"{TEST_DATA_PATH}/local_extras").resolve)}[cow]', [], None), (f"{TEST_DATA_PATH}/local_extras", ["--editable"], str(Path(f"{TEST_DATA_PATH}/local_extras").resolve), ["--editable"], None), (f"{TEST_DATA_PATH}/local_extras[cow]", ["--editable"], f'{str(Path(f"{TEST_DATA_PATH}/local_extras").resolve)}[cow]', ["--editable"], None)])
 def test_parse_specifier_for_install(
     caplog,
     package_spec_in,

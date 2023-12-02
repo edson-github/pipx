@@ -11,11 +11,7 @@ from pipx.main import __version__
 
 
 def get_help(pipxcmd: Optional[str]) -> str:
-    if pipxcmd:
-        cmd = ["pipx", pipxcmd, "--help"]
-    else:
-        cmd = ["pipx", "--help"]
-
+    cmd = ["pipx", pipxcmd, "--help"] if pipxcmd else ["pipx", "--help"]
     helptext = (
         subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
         .stdout.decode()

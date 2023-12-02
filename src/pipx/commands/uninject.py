@@ -38,10 +38,11 @@ def get_include_resource_paths(
             local_man_dir / man_section,
         )
 
-    need_to_remove = set()
-    for bin_dir_app_path in bin_dir_app_paths:
-        if bin_dir_app_path.name in venv.package_metadata[package_name].apps:
-            need_to_remove.add(bin_dir_app_path)
+    need_to_remove = {
+        bin_dir_app_path
+        for bin_dir_app_path in bin_dir_app_paths
+        if bin_dir_app_path.name in venv.package_metadata[package_name].apps
+    }
     for man_path in man_paths:
         path = Path(man_path.parent.name) / man_path.name
         if str(path) in venv.package_metadata[package_name].man_pages:
@@ -93,9 +94,7 @@ def uninject_dep(
         logger.info(f"New not required packages: {new_not_required_packages}")
 
         deps_of_uninstalled = new_not_required_packages - orig_not_required_packages
-        if len(deps_of_uninstalled) == 0:
-            pass
-        else:
+        if len(deps_of_uninstalled) != 0:
             logger.info(f"Dependencies of uninstalled package: {deps_of_uninstalled}")
 
         for dep_package_name in deps_of_uninstalled:
@@ -156,7 +155,4 @@ def uninject(
             leave_deps=leave_deps,
         )
 
-    if all_success:
-        return EXIT_CODE_OK
-    else:
-        return EXIT_CODE_UNINJECT_ERROR
+    return EXIT_CODE_OK if all_success else EXIT_CODE_UNINJECT_ERROR

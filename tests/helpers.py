@@ -79,20 +79,16 @@ def unwrap_log_text(log_text: str):
 def _mock_legacy_package_info(
     modern_package_info: Dict[str, Any], metadata_version: str
 ) -> Dict[str, Any]:
-    if metadata_version == "0.2":
-        mock_package_info_template = MOCK_PACKAGE_INFO_0_2
-    elif metadata_version == "0.1":
+    if metadata_version == "0.1":
         mock_package_info_template = MOCK_PACKAGE_INFO_0_1
+    elif metadata_version == "0.2":
+        mock_package_info_template = MOCK_PACKAGE_INFO_0_2
     else:
         raise Exception(
             f"Internal Test Error: Unknown metadata_version={metadata_version}"
         )
 
-    mock_package_info = {}
-    for key in mock_package_info_template:
-        mock_package_info[key] = modern_package_info[key]
-
-    return mock_package_info
+    return {key: modern_package_info[key] for key in mock_package_info_template}
 
 
 def mock_legacy_venv(venv_name: str, metadata_version: Optional[str] = None) -> None:

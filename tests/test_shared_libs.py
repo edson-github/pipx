@@ -21,6 +21,8 @@ def test_auto_update_shared_libs(
     shared_libs.shared_libs.has_been_updated_this_run = False
 
     access_time = now  # this can be anything
-    os.utime(shared_libs.shared_libs.pip_path, (access_time, mtime_minus_now + now))
-
+    os.utime(
+        shared_libs.shared_libs.pip_path,
+        (access_time, mtime_minus_now + access_time),
+    )
     assert shared_libs.shared_libs.needs_upgrade is needs_upgrade

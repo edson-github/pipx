@@ -80,9 +80,7 @@ def list_json(venv_dirs: Collection[Path]) -> VenvProblems:
             warning_messages.append(warning_str)
             continue
 
-        spec_metadata["venvs"][venv_dir.name] = {}
-        spec_metadata["venvs"][venv_dir.name]["metadata"] = venv_metadata.to_dict()
-
+        spec_metadata["venvs"][venv_dir.name] = {"metadata": venv_metadata.to_dict()}
     print(
         json.dumps(spec_metadata, indent=4, sort_keys=True, cls=JsonEncoderHandlesPath)
     )
@@ -109,11 +107,11 @@ def list_packages(
         all_venv_problems = list_json(venv_dirs)
     elif short_format:
         all_venv_problems = list_short(venv_dirs)
-    else:
-        if not venv_dirs:
-            return EXIT_CODE_OK
+    elif venv_dirs:
         all_venv_problems = list_text(venv_dirs, include_injected, str(venv_container))
 
+    else:
+        return EXIT_CODE_OK
     if all_venv_problems.bad_venv_name:
         logger.warning(
             "\nOne or more packages contain out-of-date internal data installed from a\n"
